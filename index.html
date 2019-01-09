@@ -85,7 +85,7 @@
                     <div class="form-group form-check form-check-inline">
                         <label class="form-check-label form-check-input"><input type="radio" name="endpoint" value="distance"
                                 checked>Distance</label>
-                        <label class="form-check-label form-check-input"><input type="radio" name="endpoint" value="shortests">Shortest</label>
+                        <label class="form-check-label form-check-input"><input type="radio" name="endpoint" value="shortest">Shortest</label>
                         <label class="form-check-label form-check-input"><input type="radio" name="endpoint" value="stops">Stops</label>
                     </div>
                     <div class="form-group">
@@ -112,7 +112,7 @@
     <script>
         var utils = { urlApi: "http://localhost:8081/trains/" };
         var objGraph = {};
-        var endpoints = { distance: "distance", stops: "stops", shortests: "shortests" };
+        var endpoints = { distance: "distance", stops: "stops", shortest: "shortest" };
 
         var sendGraphForm = document.getElementById("sendGraphForm");
         var graphId = document.getElementById("graph");
@@ -157,7 +157,7 @@
                 if (e.target.value == endpoints.stops) {
                     routeId.placeholder = "AB2 AC4 BC5";
                 }
-                else if (e.target.value == endpoints.shortests) {
+                else if (e.target.value == endpoints.shortest) {
                     routeId.placeholder = "AB AC BC ABC";
                 }
                 else if (e.target.value == endpoints.distance) {
@@ -225,4 +225,4 @@
     </script>
 </body>
 
-</html>
+</html
