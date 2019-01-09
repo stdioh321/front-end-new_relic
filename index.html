@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>New Relic</title>
+    <!-- 
+    ENDPOINTS
+
+    // trains/distance?graph=AB5,BC4,CD8,DC8,DE6,AD5,CE2,EB3,AE7&route=ABC
+    // trains/stops?graph=AB5,BC4,CD8,DC8,DE6,AD5,CE2,EB3,AE7&route=CC$maxstops=3
+    // trains/shortest?graph=AB5,BC4,CD8,DC8,DE6,AD5,CE2,EB3,AE7&route=AC
+
+ -->
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+        crossorigin="anonymous"></script>
+
+    <!-- Bootstrap -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css">
+
+
+    <!-- Toastr -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+
+
+
+    <style>
+        /* body{
+            margin: 0px;
+        }
+        .container{
+            margin: 0px;
+            padding-left: 5px;
+            padding-right: 5px;
+        }
+        
+        @media only screen and (min-width: 500px) {
+            .container{
+                border:         solid red 1px; 
+                margin-left:    10px; 
+                margin-right:   10px;
+                
+            }
+        }
+        
+        @media only screen and (max-width: 501px) {
+            .container{
+                border:         solid blue 1px; 
+            }
+        }
+         */
+    </style>
+</head>
+
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <h1>
+                    New Relic
+
+                </h1>
+
+                <form action="" method="GET" id="sendGraphForm" class="form">
+                    <div class="form-group">
+                        <label for="graph">
+                            Graph
+                        </label>
+                        <input type="text" id="graph" name="graph" placeholder="AB5,BCD,ABC,BCD,ABCDE..." required
+                            class="form-control">
+
+                    </div>
+                    <div class="form-group">
+                        <label for="route">
+                            Route
+                        </label>
+                        <input type="text" id="route" name="route" placeholder="AB AC BC ABC" required class="form-control">
+
+                    </div>
+                    <div class="form-group form-check form-check-inline">
+                        <label class="form-check-label form-check-input"><input type="radio" name="endpoint" value="distance"
+                                checked>Distance</label>
+                        <label class="form-check-label form-check-input"><input type="radio" name="endpoint" value="shortests">Shortest</label>
+                        <label class="form-check-label form-check-input"><input type="radio" name="endpoint" value="stops">Stops</label>
+                    </div>
+                    <div class="form-group">
+                        <input type="submit" value="Send" class="btn btn-primary btn-block">
+                    </div>
+
+                </form>
+
+
+            </div>
+            <div class="col-md-12">
+
+                <h3>
+                    Result
+                </h3>
+                <div id="result">
+                    Nothing
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var utils = { urlApi: "http://localhost:8081/trains/" };
+        var objGraph = {};
+        var endpoints = { distance: "distance", stops: "stops", shortests: "shortests" };
+
+        var sendGraphForm = document.getElementById("sendGraphForm");
+        var graphId = document.getElementById("graph");
+        var routeId = document.getElementById("route");
+        var endpointsId = document.getElementsByName("endpoint");
+
+        toastr.options.closeButton = true;
+        toastr.options.closeMethod = 'fadeOut';
+        toastr.options.closeDuration = 300;
+        toastr.options.closeEasing = 'swing';
+        toastr.options.newestOnTop = false;
+        toastr.options.progressBar = true;
+
+
+
+        sendGraphForm.onsubmit = function (evt) {
+            evt.preventDefault();
+            objGraph.graph = evt.target.graph.value;
+            objGraph.route = evt.target.route.value;
+            objGraph.endpoint = evt.target.endpoint.value;
+            // console.log(objGraph);
+            sendGraph(objGraph);
+
+        }
+
+        graphId.addEventListener("keyup", function (e) {
+            graphId.value = graphId.value.toUpperCase();
+            var val = new String(graphId.value);
+            graphId.value = val.replace(/[^a-zA-Z\d,]/gi, "");
+
+        });
+
+        routeId.addEventListener("keyup", function (e) {
+            routeId.value = routeId.value.toUpperCase();
+            var val = new String(routeId.value);
+            routeId.value = val.replace(/[^a-zA-Z\d]/gi, "");
+
+        });
+        endpointsId.forEach(function (endpoint) {
+            endpoint.addEventListener("change", function (e) {
+                routeId.value = "";
+                if (e.target.value == endpoints.stops) {
+                    routeId.placeholder = "AB2 AC4 BC5";
+                }
+                else if (e.target.value == endpoints.shortests) {
+                    routeId.placeholder = "AB AC BC ABC";
+                }
+                else if (e.target.value == endpoints.distance) {
+                    routeId.placeholder = "AB AC BC ABC";
+                }
+            });
+        });
+
+        function validateGraph(valToTest) {
+            return /^([a-zA-Z]{2,}\d{1,},){0,}([a-zA-Z]{2,}\d{1,}){1}$/gi.test(new String(valToTest));
+        }
+        function validateRoute(valToTest) {
+            console.log(valToTest);
+            if (valToTest.endpoint == "stops")
+                return /^[a-zA-Z]{2,}\d{1,}$/gi.test(new String(valToTest.route));
+            else
+                return /^[a-zA-Z]{2,}$/gi.test(new String(valToTest.route));
+        }
+
+        function validateForm(objToTest) {
+            
+            if (!validateGraph(objToTest.graph)) {
+            
+                toastr.error("Graph is wrong.");
+                return false;
+            }
+            if (!validateRoute(objToTest)) {
+                toastr.error("Route is wrong.");
+                return false;
+            }
+
+            return true;
+
+        }
+
+        function sendGraph(objSend) {
+            if (!validateForm(objSend)) {
+                return false;
+            }
+            objSend.maxstops = "";
+            if (objSend.endpoint == endpoints.stops) {
+                objSend.maxstops = "&maxstops=";
+                objSend.maxstops += objSend.route.substring(objSend.route.search(/\d/));
+                objSend.route = objSend.route.substring(0, objSend.route.search(/\d/));
+
+            }
+
+            var xhttp = new XMLHttpRequest();
+            var url;
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    toastr.success("Success!")
+                    document.getElementById("result").innerHTML = this.responseText;
+                }
+                else if (this.readyState == 4 && this.status == 500) {
+                    toastr.warning("Something is Strange Here.");
+                    document.getElementById("result").innerHTML = this.responseText;
+                }
+            };
+            url = utils.urlApi + objSend.endpoint + "?graph=" + objSend.graph + "&route=" + objSend.route + objSend.maxstops;
+
+            xhttp.open("GET", url, true);
+            xhttp.send();
+        }
+    </script>
+</body>
+
+</html>
